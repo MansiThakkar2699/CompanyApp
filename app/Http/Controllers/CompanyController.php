@@ -60,31 +60,59 @@ class CompanyController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $company = Company::with(['country', 'state', 'city'])->findOrFail($id);
+
+        // Force decode if not array
+        if (is_string($company->services)) {
+            $company->services = json_decode($company->services, true);
+        }
+        if (is_string($company->branches)) {
+            $company->branches = json_decode($company->branches, true);
+        }
+
+        return response()->json([
+            'company' => $company
+        ]);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Company $company)
     {
-        //
+        $countries = Country::all();
+        $services = ['IT', 'Finance', 'Marketing', 'HR'];
+        $branches = ['Head Office', 'Regional', 'Overseas'];
+        return view('companies.edit', compact('company', 'countries', 'services', 'branches'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Company $company)
     {
-        //
+        $data = $request->all();
+
+        if ($request->hasFile('company_logo')) {
+            $file = $request->file('company_logo')->store('logos', 'public');
+            $data['company_logo'] = $file;
+        }
+
+        $data['services'] = json_encode($request->services);
+        $data['branches'] = json_encode($request->branches);
+
+        $company->update($data);
+
+        return redirect()->route('companies.index')->with('success', 'Company updated!');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Company $company)
     {
-        //
+        $company->delete();
+        return redirect()->back()->with('success', 'Company deleted!');
     }
 
     public function getStates($country_id)

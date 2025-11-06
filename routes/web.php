@@ -28,5 +28,6 @@ Route::get('logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
     Route::get('/get-states/{country_id}', [CompanyController::class, 'getStates']);
     Route::get('/get-cities/{state_id}', [CompanyController::class, 'getCities']);
+    Route::get('/companies/{id}/view', [CompanyController::class, 'show'])->name('companies.view');
     Route::resource('companies', CompanyController::class);
 });
