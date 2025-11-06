@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Company;
+use App\Models\Country;
+use App\Models\State;
+use App\Models\City;
 
 class CompanyController extends Controller
 {
@@ -11,7 +15,8 @@ class CompanyController extends Controller
      */
     public function index()
     {
-        return view('companies.index');
+        $companies = Company::all();
+        return view('companies.index', compact('companies'));
     }
 
     /**
@@ -19,7 +24,10 @@ class CompanyController extends Controller
      */
     public function create()
     {
-        //
+        $countries = Country::all();
+        $services = ['IT', 'Finance', 'Marketing', 'HR'];
+        $branches = ['Head Office', 'Regional', 'Overseas'];
+        return view('companies.create', compact('countries', 'services', 'branches'));
     }
 
     /**
@@ -27,7 +35,24 @@ class CompanyController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'company_name' => 'required',
+            'email' => 'required|email',
+            'mobile' => 'required',
+        ]);
+
+        $data = $request->all();
+        if ($request->hasFile('company_logo')) {
+            $file = $request->file('company_logo')->store('logos', 'public');
+            $data['company_logo'] = $file;
+        }
+
+        $data['services'] = json_encode($request->services);
+        $data['branches'] = json_encode($request->branches);
+
+        Company::create($data);
+
+        return redirect()->route('companies.index')->with('success', 'Company created!');
     }
 
     /**
@@ -60,5 +85,15 @@ class CompanyController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function getStates($country_id)
+    {
+        return response()->json(State::where('country_id', $country_id)->get());
+    }
+
+    public function getCities($state_id)
+    {
+        return response()->json(City::where('state_id', $state_id)->get());
     }
 }
